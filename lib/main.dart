@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'WelcomeScreen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -45,16 +48,47 @@ class _LoginScreenState extends State<LoginScreen> {
     clientId: '439893156039-svq852netu5mh4498o7jubn70vkc717g.apps.googleusercontent.com',
 
   );
+  void _saveCredentialsToPrefs(String email, String username) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  void _submitForm() {
+    await prefs.setString('userEmail', email);
+
+    await prefs.setString('userName', username);
+  }
+  Future<String> _readCredentialsFromPrefs() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final String? email = prefs.getString('userEmail');
+    final String? username = prefs.getString('userName');
+
+    if (email != null && username != null) {
+      return 'Data in Prefs: Email=$email, User=$username';
+    } else {
+      return 'No saved data found in SharedPreferences.';
+    }
+  }
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      final String email = _emailController.text;
+      final String username = _usernameController.text;
+
+      _saveCredentialsToPrefs(email, username);
+
+      String savedDataStatus = await _readCredentialsFromPrefs();
+      /*ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Manual Sign Up Successful! Email: ${_emailController.text}',
           ),
           backgroundColor: Colors.green,
-        ),
+        ),*/
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WelcomeScreen(
+                username: username,
+              ),
+            ),
       );
     }
   }
